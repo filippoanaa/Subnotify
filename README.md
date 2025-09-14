@@ -21,6 +21,5 @@ no payments are missed and all subscription services can be tracked in one place
 - **JPA:** For mapping Java objects to database tables and managing database operations.
 - **Hibernate:**  As the implementation of JPA to handle ORM
 
-## Demo
-[Video here](https://youtu.be/7rkBHE_Eys4)
+
   
