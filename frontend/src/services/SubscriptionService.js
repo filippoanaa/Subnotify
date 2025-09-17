@@ -7,7 +7,7 @@ class SubscriptionService {
         return axios.get(`${BASE_URL}/subscriptions/${subscriptionId}`); // Obține o subscripție specifică
     }
 
-    getUsersSubscriptions(userId) {
+    getAppUsersSubscriptions(userId) {
         return axios.get(`${BASE_URL}/users/${userId}/subscriptions`); // Obține subscripțiile unui utilizator
     }
 

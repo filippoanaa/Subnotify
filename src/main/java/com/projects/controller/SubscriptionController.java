@@ -1,7 +1,7 @@
 package com.projects.controller;
 
 import com.projects.exception.EntityAlreadyExistsException;
-import com.projects.model.Subscription;
+import com.projects.model.entity.Subscription;
 import com.projects.service.SubscriptionService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -31,16 +31,16 @@ public class SubscriptionController {
     }
 
     @GetMapping("/users/{userId}/subscriptions")
-    public ResponseEntity<List<Subscription>> getUsersSubscriptions(@PathVariable Long userId) {
-        List<Subscription> subscriptions = subscriptionService.getUsersSubscriptions(userId);
+    public ResponseEntity<List<Subscription>> getAppUsersSubscriptions(@PathVariable Long userId) {
+        List<Subscription> subscriptions = subscriptionService.getAppUsersSubscriptions(userId);
         return ResponseEntity.ok(subscriptions);
     }
 
     @PostMapping("/users/{userId}/subscriptions")
-    public ResponseEntity<?> addSubscriptionToUser(@RequestBody Subscription subscription, @PathVariable Long userId) {
+    public ResponseEntity<?> addSubscriptionToAppUser(@RequestBody Subscription subscription, @PathVariable Long userId) {
         try {
             System.out.println("Incerc sa adaug");
-            subscriptionService.addSubscriptionToUser(userId, subscription);
+            subscriptionService.addSubscriptionToAppUser(userId, subscription);
             return ResponseEntity.status(HttpStatus.CREATED).body("Subscription added successfully");
         } catch (EntityAlreadyExistsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Subscription already exists: " + e.getMessage());
@@ -48,9 +48,9 @@ public class SubscriptionController {
     }
 
     @DeleteMapping("/users/{userId}/subscriptions/{subscriptionId}")
-    public ResponseEntity<?> deleteSubscriptionFromUser(@PathVariable Long userId, @PathVariable Long subscriptionId) {
+    public ResponseEntity<?> deleteSubscriptionFromAppUser(@PathVariable Long userId, @PathVariable Long subscriptionId) {
         try {
-            subscriptionService.removeSubscriptionFromUser(userId, subscriptionId);
+            subscriptionService.removeSubscriptionFromAppUser(userId, subscriptionId);
             return ResponseEntity.ok("Subscription deleted successfully");
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Subscription not found: " + e.getMessage());

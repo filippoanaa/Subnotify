@@ -1,4 +1,4 @@
-package com.projects.model;
+package com.projects.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
@@ -42,7 +42,7 @@ public class Subscription {
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private AppUser appUser;
 
     public void calculateDueDate() {
         if (this.startDate != null && this.type != null) {

@@ -1,4 +1,4 @@
-package com.projects.model;
+package com.projects.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -18,7 +18,7 @@ import java.util.List;
 @Table(name = "users", uniqueConstraints  = {
         @UniqueConstraint(columnNames = "email"),
 })
-public class User {
+public class AppUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -37,12 +37,12 @@ public class User {
 
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Subscription> subscriptions = new ArrayList<>();
 
 
     @Override
     public String toString() {
-        return "User [id=" + id + ", lastName=" + lastName + ", firstName=" + firstName + ", email=" + email  + "]";
+        return "AppUser [id=" + id + ", lastName=" + lastName + ", firstName=" + firstName + ", email=" + email  + "]";
     }
 }

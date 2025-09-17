@@ -9,7 +9,7 @@ const SubscriptionsList = () => {
     const [error, setError] = useState('');
 
     const fetchSubscriptions = () => {
-        SubscriptionService.getUsersSubscriptions(userId)
+        SubscriptionService.getAppUsersSubscriptions(userId)
             .then(response => {
                 setSubscriptions(response.data);
             })

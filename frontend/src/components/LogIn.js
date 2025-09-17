@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Form, Card, Col, Row, Button, Alert, Modal } from 'react-bootstrap';
-import UserService from '../services/UserService';
+import AppUserService from '../services/AppUserService';
 import SubscriptionService from '../services/SubscriptionService';
+import {jwtDecode} from "jwt-decode";
 
 const LogIn = ({ onLogin }) => {
   const [email, setEmail] = useState('');
@@ -30,29 +31,38 @@ const LogIn = ({ onLogin }) => {
     }
 
     try {
-      const response = await UserService.login({ email, password });
-      if (response.status === 200) {
-        const userId = response.data.id;
-        onLogin(userId);
-        setUserIdAfterLogin(userId);
+      const loginResponse = await AppUserService.login({email, password});
+      if (loginResponse.status === 200) {
+        const token = loginResponse.data.jwtToken; // backend sends { "token": "..." }
+        console.log(token);
+
+        const decodedJwt = jwtDecode(token);
+
+        localStorage.setItem("jwt", token);
+        localStorage.setItem("user", JSON.stringify({
+          id: decodedJwt.sub,
+          firstName: decodedJwt.firstName
+        }));
+        onLogin(decodedJwt.sub);
+        setUserIdAfterLogin(decodedJwt.sub);
 
         try {
-          const dueSoonResponse = await SubscriptionService.getSubscriptionsDueSoon(userId);
+          const dueSoonResponse = await SubscriptionService.getSubscriptionsDueSoon(decodedJwt.sub);
           if (dueSoonResponse.data?.length > 0) {
             setNotifications(dueSoonResponse.data);
             setShowModal(true); 
           } else {
-            navigate(`/users/${userId}/subscriptions`);
+            navigate(`/users/${decodedJwt.sub}/subscriptions`);
           }
         } catch (subError) {
           console.error('Error fetching subscriptions due soon:', subError);
-          navigate(`/users/${userId}/subscriptions`);
+          navigate(`/users/${decodedJwt.sub}/subscriptions`);
         }
 
-      } else if (response.status === 401) {
+      } else if (loginResponse.status === 401) {
         clearFields();
         setError('Incorrect email or password');
-      } else if (response.status === 404) {
+      } else if (loginResponse.status === 404) {
         clearFields();
         setError('User not found');
       } else {

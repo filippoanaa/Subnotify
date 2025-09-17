@@ -2,12 +2,11 @@ package com.projects.service;
 
 import com.projects.exception.EntityAlreadyExistsException;
 import com.projects.exception.EntityNotFoundException;
-import com.projects.model.Subscription;
-import com.projects.model.User;
+import com.projects.model.entity.Subscription;
+import com.projects.model.entity.AppUser;
 import com.projects.repository.SubscriptionRepository;
-import com.projects.repository.UserRepository;
+import com.projects.repository.AppUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
@@ -21,12 +20,11 @@ public class SubscriptionService {
 
     private SubscriptionRepository subscriptionRepository;
 
-    private UserRepository userRepository;
+    private AppUserRepository userRepository;
 
-    private PasswordEncoder passwordEncoder;
 
     @Autowired
-    public SubscriptionService(SubscriptionRepository subscriptionRepository, UserRepository userRepository) {
+    public SubscriptionService(SubscriptionRepository subscriptionRepository, AppUserRepository userRepository) {
         this.subscriptionRepository = subscriptionRepository;
         this.userRepository = userRepository;
         updateDueDates();
@@ -42,8 +40,8 @@ public class SubscriptionService {
         return subscriptionRepository.findById(id).orElse(null);
     }
 
-    public void addSubscriptionToUser(Long userId, Subscription subscription) {
-        User user = userRepository.findById(userId).get();
+    public void addSubscriptionToAppUser(Long userId, Subscription subscription) {
+        AppUser user = userRepository.findById(userId).get();
 
         boolean exists = user.getSubscriptions().stream()
                 .anyMatch(sub -> sub.getName().equals(subscription.getName()));
@@ -53,7 +51,7 @@ public class SubscriptionService {
                 subscription.setStartDate(LocalDate.now());
             }
             subscription.calculateDueDate();
-            subscription.setUser(user);
+            subscription.setAppUser(user);
             subscriptionRepository.save(subscription);
         } else {
             throw new EntityAlreadyExistsException("Subscription with name: " + subscription.getName() + " already exists");
@@ -67,8 +65,8 @@ public class SubscriptionService {
         if(subs == null){
             throw new EntityNotFoundException("Subscription with id: " + subscription.getId() + " not found");
         }
-        if(!subs.getUser().getId().equals(userId)) {
-            throw new AccessDeniedException("User doesn't have the permission to update the subscription.");
+        if(!subs.getAppUser().getId().equals(userId)) {
+            throw new AccessDeniedException("AppUser doesn't have the permission to update the subscription.");
         }
         subs.setName(subscription.getName());
         subs.setAmount(subscription.getAmount());
@@ -81,7 +79,7 @@ public class SubscriptionService {
     }
 
     public List<Subscription> paymentIn3Days(Long userId) {
-        List<Subscription> subscriptions = subscriptionRepository.findSubscriptionsByUserId(userId);
+        List<Subscription> subscriptions = subscriptionRepository.findSubscriptionsByAppUserId(userId);
         List<Subscription> toPay = new ArrayList<>();
         LocalDate now = LocalDate.now();
         LocalDate threeDaysLater = now.plusDays(3);
@@ -97,9 +95,9 @@ public class SubscriptionService {
     }
 
 
-    public void removeSubscriptionFromUser(Long userId, Long subscriptionId) {
+    public void removeSubscriptionFromAppUser(Long userId, Long subscriptionId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId).orElse(null);
-        if(subscription == null || !Objects.equals(subscription.getUser().getId(), userId)) {
+        if(subscription == null || !Objects.equals(subscription.getAppUser().getId(), userId)) {
             throw new EntityNotFoundException("Subscription with id: " + subscriptionId + "not found for user.");
         }
         userRepository.findById(userId).ifPresent(user -> user.getSubscriptions().remove(subscription));
@@ -110,7 +108,7 @@ public class SubscriptionService {
         return subscriptionRepository.findAll();
     }
 
-    public List<Subscription> getUsersSubscriptions(Long userId) {
-        return subscriptionRepository.findSubscriptionsByUserId(userId);
+    public List<Subscription> getAppUsersSubscriptions(Long userId) {
+        return subscriptionRepository.findSubscriptionsByAppUserId(userId);
     }
 }
