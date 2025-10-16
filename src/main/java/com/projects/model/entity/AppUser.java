@@ -1,4 +1,4 @@
-package com.projects.model;
+package com.projects.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -18,10 +19,10 @@ import java.util.List;
 @Table(name = "users", uniqueConstraints  = {
         @UniqueConstraint(columnNames = "email"),
 })
-public class User {
+public class AppUser {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(name = "last_name")
     private String lastName;
@@ -36,13 +37,13 @@ public class User {
     private String password;
 
 
-    @JsonManagedReference
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JoinColumn(name = "user_id")
     private List<Subscription> subscriptions = new ArrayList<>();
 
 
     @Override
     public String toString() {
-        return "User [id=" + id + ", lastName=" + lastName + ", firstName=" + firstName + ", email=" + email  + "]";
+        return "AppUser [id=" + id + ", lastName=" + lastName + ", firstName=" + firstName + ", email=" + email  + "]";
     }
 }

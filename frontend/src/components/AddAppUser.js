@@ -1,63 +1,85 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import UserService from '../services/UserService';
 import { Alert, Container, Row, Col, Card, Form, Button } from 'react-bootstrap';
+import { jwtDecode } from "jwt-decode";
+import Services from "../services/Services";
 
-const AddUser = ({ onLogin }) => {
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [passwordConfirmation, setPasswordConfirmation] = useState('');
+const AddAppUser = ({ onLogin }) => {
+    const [form, setForm] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        passwordConfirmation: ''
+    });
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
     const clearFields = () => {
-        setEmail('');
-        setFirstName('');
-        setLastName('');
-        setPassword('');
-        setPasswordConfirmation('');
+        setForm({
+            firstName: '',
+            lastName: '',
+            email: '',
+            password: '',
+            passwordConfirmation: ''
+        });
     };
 
-    const handleAddUser = async (e) => {
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleAddAppUser = async (e) => {
         e.preventDefault();
+        const { firstName, lastName, email, password, passwordConfirmation } = form;
 
         if (!firstName || !lastName || !email || !password || !passwordConfirmation) {
             setError("All fields must be completed!");
             return;
         }
-
         if (password !== passwordConfirmation) {
             setError("Passwords do not match!");
-            clearFields();
             return;
         }
 
-        const user = { lastName, firstName, email, password };
+        const user = { firstName, lastName, email, password, passwordConfirmation };
 
         try {
-            const response = await UserService.createUser(user);
-            if(response.status == 201){
-                const userId = response.data.id;
-                onLogin(userId);
-                navigate(`/users/${userId}/subscriptions`);
-            }else if(response.status == 409){
+            const registerResponse = await Services.createAppUser(user);
+
+            if (registerResponse.status === 200) {
+                const loginPayload = { email, password };
+                const loginResponse = await Services.login(loginPayload);
+
+                if (loginResponse.status === 200) {
+                    const token = loginResponse.data.jwtToken;
+                    const decodedJwt = jwtDecode(token);
+
+                    localStorage.setItem("jwt", token);
+                    localStorage.setItem("user", JSON.stringify({
+                        id: decodedJwt.sub,
+                        firstName: decodedJwt.firstName,
+                    }));
+
+                    onLogin(decodedJwt.sub);
+                    navigate(`/subnotify}/your-subscriptions`);
+                } else {
+                    setError("Login failed after registration.");
+                }
+            } else if (registerResponse.status === 409) {
                 setError("Email already in use!");
                 setTimeout(() => setError(''), 3000);
                 clearFields();
             }
-            
         } catch (error) {
-            if (error.response && error.response.data) {
+            if (error.response?.data) {
                 setError(error.response.data);
-                setTimeout(() => setError(''), 3000);
-                clearFields();
             } else {
-                setError('An error occurred: ' + error.message);
-                setTimeout(() => setError(''), 3000);
-                clearFields();
+                setError("An error occurred: " + error.message);
             }
+            setTimeout(() => setError(''), 3000);
+            clearFields();
         }
     };
 
@@ -70,57 +92,57 @@ const AddUser = ({ onLogin }) => {
                             <h4>Create account</h4>
                         </Card.Header>
                         <Card.Body>
-                            <Form onSubmit={handleAddUser}>
+                            <Form onSubmit={handleAddAppUser}>
                                 <Form.Group className="mb-3">
                                     <Form.Label>First Name</Form.Label>
                                     <Form.Control
                                         type="text"
+                                        name="firstName"
                                         placeholder="Enter first name"
-                                        value={firstName}
-                                        onChange={(e) => setFirstName(e.target.value)}
+                                        value={form.firstName}
+                                        onChange={handleChange}
                                     />
                                 </Form.Group>
-
                                 <Form.Group className="mb-3">
                                     <Form.Label>Last Name</Form.Label>
                                     <Form.Control
                                         type="text"
+                                        name="lastName"
                                         placeholder="Enter last name"
-                                        value={lastName}
-                                        onChange={(e) => setLastName(e.target.value)}
+                                        value={form.lastName}
+                                        onChange={handleChange}
                                     />
                                 </Form.Group>
-
                                 <Form.Group className="mb-3">
                                     <Form.Label>Email</Form.Label>
                                     <Form.Control
                                         type="email"
+                                        name="email"
                                         placeholder="Enter email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        value={form.email}
+                                        onChange={handleChange}
                                     />
                                 </Form.Group>
-
                                 <Form.Group className="mb-3">
                                     <Form.Label>Password</Form.Label>
                                     <Form.Control
                                         type="password"
+                                        name="password"
                                         placeholder="Enter password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
+                                        value={form.password}
+                                        onChange={handleChange}
                                     />
                                 </Form.Group>
-
                                 <Form.Group className="mb-3">
                                     <Form.Label>Confirm Password</Form.Label>
                                     <Form.Control
                                         type="password"
+                                        name="passwordConfirmation"
                                         placeholder="Enter password again"
-                                        value={passwordConfirmation}
-                                        onChange={(e) => setPasswordConfirmation(e.target.value)}
+                                        value={form.passwordConfirmation}
+                                        onChange={handleChange}
                                     />
                                 </Form.Group>
-
                                 <Button type="submit" className="w-100" variant="success">
                                     Sign up
                                 </Button>
@@ -128,7 +150,7 @@ const AddUser = ({ onLogin }) => {
                                     Cancel
                                 </Link>
                             </Form>
-                            {error && <Alert variant="danger">{error}</Alert>}
+                            {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
                         </Card.Body>
                     </Card>
                 </Col>
@@ -137,4 +159,4 @@ const AddUser = ({ onLogin }) => {
     );
 };
 
-export default AddUser;
+export default AddAppUser;

@@ -1,27 +1,41 @@
-import React, { useState } from 'react';
-import UserService from '../services/UserService';
+import React, {useEffect, useState} from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
+import Services from "../services/Services";
 
-const UpdateUser = () => {
-    const { userId } = useParams();
-    const [oldPassword, setOldPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
+const UpdateAppUser = () => {
+    const [form, setForm] = useState({
+        oldPassword: '',
+        newPassword: '',
+        newPasswordConfirm: ''
+    });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
+    const [userId, setUserId] = useState(null);
+
+    useEffect(() => {
+        const userData = JSON.parse(localStorage.getItem("user"));
+        setUserId(userData.id);
+    }, [userId]);
 
     const clearFields = () => {
-        setOldPassword('');
-        setNewPassword('');
-        setNewPasswordConfirm('');
+        setForm({
+            oldPassword: '',
+            newPassword: '',
+            newPasswordConfirm: ''
+        });
     };
-    
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm(prev => ({ ...prev, [name]: value }));
+    };
+
     const handleUpdate = async (e) => {
         e.preventDefault();
 
-        if (newPassword !== newPasswordConfirm) {
+        if (form.newPassword !== form.newPasswordConfirm) {
             clearFields();
             setError('New password and confirmation do not match.');
             setTimeout(() => setError(''), 3000);
@@ -29,45 +43,38 @@ const UpdateUser = () => {
         }
 
         try {
-            const updatedUser = { oldPassword, newPassword };
-            const response = await UserService.updatePassword(userId, updatedUser);
-            if(response.status == 204){
+            const response = await Services.updatePassword(userId, form.oldPassword, form.newPassword);
+            if (response.status === 204) {
                 clearFields();
                 setSuccess('Password updated successfully.');
                 setTimeout(() => setSuccess(''), 3000);
-            }else if(response.status == 401){
+            } else if (response.status === 401) {
                 clearFields();
                 setError('Incorrect current password.');
                 setTimeout(() => setError(''), 3000);
-            }else if(response.status == 409){
+            } else if (response.status === 409) {
                 clearFields();
                 setError('No user found.');
                 setTimeout(() => setError(''), 3000);
             }
-
-            
         } catch (error) {
             clearFields();
-            console.log('Error updating user:', error);
+            console.error('Error updating user:', error);
             setError('An error occurred while updating the user.');
             setTimeout(() => setError(''), 3000);
         }
     };
 
-    const handleDeleteUser = async (e) => {
-        e.preventDefault();
-
+    const handleDeleteAppUser = async () => {
         const confirmation = window.confirm('Are you sure you want to delete your account? This action cannot be undone.');
-        if (!confirmation) {
-            return;
-        }
+        if (!confirmation) return;
 
         try {
-            await UserService.deleteUser(userId);
+            await Services.deleteAppUser(userId);
             alert('Account deleted successfully.');
-            navigate('/'); 
+            navigate('/');
         } catch (error) {
-            console.log('Error deleting user:', error);
+            console.error('Error deleting user:', error);
             clearFields();
             setError('An error occurred while deleting the account.');
             setTimeout(() => setError(''), 3000);
@@ -89,31 +96,34 @@ const UpdateUser = () => {
                                     <Form.Label>Current Password:</Form.Label>
                                     <Form.Control
                                         type="password"
-                                        value={oldPassword}
-                                        onChange={(e) => setOldPassword(e.target.value)}
+                                        name="oldPassword"
+                                        value={form.oldPassword}
+                                        onChange={handleChange}
                                     />
                                 </Form.Group>
                                 <Form.Group className="mb-3">
                                     <Form.Label>New Password:</Form.Label>
                                     <Form.Control
                                         type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        name="newPassword"
+                                        value={form.newPassword}
+                                        onChange={handleChange}
                                     />
                                 </Form.Group>
                                 <Form.Group className="mb-3">
                                     <Form.Label>New Password Confirmation:</Form.Label>
                                     <Form.Control
                                         type="password"
-                                        value={newPasswordConfirm}
-                                        onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                                        name="newPasswordConfirm"
+                                        value={form.newPasswordConfirm}
+                                        onChange={handleChange}
                                     />
                                 </Form.Group>
                                 <Button type="submit" variant="success" className="w-100">Update Password</Button>
                             </Form>
                             <hr />
                             <h5 className="card-title text-danger">Delete Account</h5>
-                            <Button variant="danger" className="w-100 mt-3" onClick={handleDeleteUser}>Delete Account</Button>
+                            <Button variant="danger" className="w-100 mt-3" onClick={handleDeleteAppUser}>Delete Account</Button>
                             {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
                             {success && <Alert variant="success" className="mt-3">{success}</Alert>}
                         </Card.Body>
@@ -124,4 +134,4 @@ const UpdateUser = () => {
     );
 };
 
-export default UpdateUser;
+export default UpdateAppUser;
