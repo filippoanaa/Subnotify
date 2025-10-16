@@ -1,88 +1,116 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import SubscriptionService from '../services/SubscriptionService';
 import { Card, Form, Button, Container, Row, Col, Alert, InputGroup } from 'react-bootstrap';
+import Services from "../services/Services";
 
 const AddSubscription = () => {
-    const { userId, subscriptionId } = useParams();
-    const [name, setName] = useState('');
-    const [amount, setAmount] = useState(0);
-    const [startDate, setStartDate] = useState('');
-    const [type, setType] = useState('Weekly');
+    const {subscriptionId} = useParams();
+    console.log(subscriptionId);
+    const [form, setForm] = useState({
+        name: '',
+        amount: '',
+        startDate: '',
+        type: 'Weekly'
+    });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-
     const navigate = useNavigate();
+    const[userId, setUserId] = useState(null);
+
+
 
     useEffect(() => {
+        const userData = JSON.parse(localStorage.getItem("user"));
+        setUserId(userData.id);
+
         if (subscriptionId) {
-            SubscriptionService.getSubscription(subscriptionId)
+            Services.getSubsctiption(subscriptionId)
                 .then((response) => {
-                    const subscription = response.data;
-                    setName(subscription.name);
-                    setAmount(subscription.amount);
-                    setStartDate(subscription.startDate);
-                    setType(subscription.type);
+                    const { name, amount, startDate, type } = response.data;
+                    setForm({
+                        name: name ?? '',
+                        amount: amount ?? '',
+                        startDate: startDate ?? '',
+                        type: type ?? 'Weekly'
+                    });
                 })
                 .catch((error) => {
                     setError(error.response?.data || 'Failed to fetch subscription details.');
                     setTimeout(() => setError(''), 3000);
                 });
+        } else {
+            setForm({
+                name: '',
+                amount: '',
+                startDate: '',
+                type: 'Weekly'
+            });
         }
-    }, [subscriptionId]);
+    }, [userId, subscriptionId]);
 
     const clearFields = () => {
-        setName('');
-        setAmount('');
-        setStartDate('');
-        setType('Weekly');
+        setForm({
+            name: '',
+            amount: '',
+            startDate: '',
+            type: 'Weekly'
+        });
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm(prev => ({
+            ...prev,
+            [name]: value
+        }));
     };
 
     const handleAddSubscription = async (e) => {
         e.preventDefault();
+        const { name, amount, startDate, type } = form;
 
         if (!name || !amount || !startDate || !type) {
             setError("All fields must be completed!");
             setTimeout(() => setError(''), 3000);
             return;
         }
-
-        if (amount <= 0) {
+        if (Number(amount) <= 0) {
             setError("Amount must be a positive value.");
             setTimeout(() => setError(''), 3000);
             return;
         }
 
-        const subscription = { subscriptionId, name, amount, startDate, type, userId };
+        const subscription = { name, amount, startDate, type };
 
         try {
             if (subscriptionId) {
-                const response = await SubscriptionService.updateSubscription(subscription, subscriptionId, userId);
-                if(response.status === 204) {
+                const response = await Services.updateSubscription(subscription, subscriptionId, userId);
+                if (response.status === 200) {
                     setSuccess('Subscription updated successfully.');
-                }else if(response.status === 404) {
+                    setTimeout(() => {
+                        setSuccess('');
+                        navigate(`/subnotify/your-subscriptions`);
+                    }, 1200);
+                } else if (response.status === 404) {
                     setError('Subscription not found.');
-                    setTimeout(() => setError(''), 3000);
                     clearFields();
-                }else if(response.status === 403) {
+                } else if (response.status === 403) {
                     setError('You are not authorized to update this subscription.');
-                    setTimeout(() => setError(''), 3000);
                     clearFields();
                 }
-
             } else {
-                const response = await SubscriptionService.addSubscription(subscription, userId);
-                if(response.status === 201) {
+                const response = await Services.addSubscription(subscription, userId);
+                if (response.status === 201 || response.status === 200) {
                     setSuccess('Subscription added successfully.');
-                }else if(response.status === 409) {
+                    setTimeout(() => {
+                        setSuccess('');
+                        navigate(`/subnotify/your-subscriptions`);
+                    }, 1200);
+                } else if (response.status === 409 || response.status === 400) {
                     setError('Subscription already exists.');
-                    setTimeout(() => setError(''), 3000);
                     clearFields();
                 }
             }
-            setTimeout(() => setSuccess(''), 3000);
-            clearFields();
-            navigate(`/users/${userId}/subscriptions`); 
         } catch (error) {
             const errorMessage = error.response?.data || error.message || 'An unexpected error occurred.';
             setError(errorMessage);
@@ -105,48 +133,48 @@ const AddSubscription = () => {
                                     <Form.Label>Name</Form.Label>
                                     <Form.Control
                                         type="text"
+                                        name="name"
                                         placeholder="Enter subscription name"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        value={form.name}
+                                        onChange={handleChange}
                                     />
                                 </Form.Group>
-
                                 <Form.Group className="mb-3">
                                     <Form.Label>Amount</Form.Label>
                                     <InputGroup>
                                         <InputGroup.Text>€</InputGroup.Text>
                                         <Form.Control
                                             type="number"
+                                            name="amount"
                                             min="0"
                                             placeholder="Enter amount"
-                                            value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
+                                            value={form.amount}
+                                            onChange={handleChange}
                                         />
                                     </InputGroup>
                                 </Form.Group>
-
                                 <Form.Group className="mb-3">
                                     <Form.Label>Start Date</Form.Label>
                                     <Form.Control
                                         type="date"
+                                        name="startDate"
                                         max={new Date().toISOString().split('T')[0]}
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
+                                        value={form.startDate}
+                                        onChange={handleChange}
                                     />
                                 </Form.Group>
-
                                 <Form.Group className="mb-3">
                                     <Form.Label>Type</Form.Label>
                                     <Form.Select
-                                        value={type}
-                                        onChange={(e) => setType(e.target.value)}
+                                        name="type"
+                                        value={form.type}
+                                        onChange={handleChange}
                                     >
                                         <option value="Weekly">Weekly</option>
                                         <option value="Monthly">Monthly</option>
                                         <option value="Yearly">Yearly</option>
                                     </Form.Select>
                                 </Form.Group>
-
                                 <Button type="submit" className="w-100" variant="success">
                                     {subscriptionId ? 'Update Subscription' : 'Add Subscription'}
                                 </Button>

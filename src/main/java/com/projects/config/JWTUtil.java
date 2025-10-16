@@ -51,13 +51,16 @@ public class JWTUtil {
     }
 
     public boolean validateToken(String token) {
+        System.out.println("Validez tokenul: " + token);
         try {
             Jwts.parserBuilder()
                     .setSigningKey(getKey())
                     .build()
                     .parseClaimsJws(token);
+            System.out.println("E ok tpkenul");
             return true;
         } catch (JwtException e) {
+            System.out.println("Erro validate tokenul: " + e.getMessage());
             return false;
         }
     }

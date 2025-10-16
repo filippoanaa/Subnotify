@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Form, Card, Col, Row, Button, Alert, Modal } from 'react-bootstrap';
-import AppUserService from '../services/AppUserService';
-import SubscriptionService from '../services/SubscriptionService';
 import {jwtDecode} from "jwt-decode";
+import Services from "../services/Services";
 
 const LogIn = ({ onLogin }) => {
   const [email, setEmail] = useState('');
@@ -31,9 +30,9 @@ const LogIn = ({ onLogin }) => {
     }
 
     try {
-      const loginResponse = await AppUserService.login({email, password});
-      if (loginResponse.status === 200) {
-        const token = loginResponse.data.jwtToken; // backend sends { "token": "..." }
+      const loginResponse = await Services.login({email, password});
+      if (loginResponse.status === 200) {  // backend sends { "token": "..." }
+        const token = loginResponse.data.jwtToken;
         console.log(token);
 
         const decodedJwt = jwtDecode(token);
@@ -46,42 +45,26 @@ const LogIn = ({ onLogin }) => {
         onLogin(decodedJwt.sub);
         setUserIdAfterLogin(decodedJwt.sub);
 
-        try {
-          const dueSoonResponse = await SubscriptionService.getSubscriptionsDueSoon(decodedJwt.sub);
-          if (dueSoonResponse.data?.length > 0) {
-            setNotifications(dueSoonResponse.data);
-            setShowModal(true); 
-          } else {
-            navigate(`/users/${decodedJwt.sub}/subscriptions`);
-          }
-        } catch (subError) {
-          console.error('Error fetching subscriptions due soon:', subError);
-          navigate(`/users/${decodedJwt.sub}/subscriptions`);
-        }
+        navigate(`/subnotify/your-subscriptions`);
 
-      } else if (loginResponse.status === 401) {
-        clearFields();
-        setError('Incorrect email or password');
-      } else if (loginResponse.status === 404) {
-        clearFields();
-        setError('User not found');
-      } else {
-        clearFields();
-        setError('Login failed');
+
       }
 
-      setTimeout(() => setError(''), 3000);
     } catch (error) {
-      console.error('Error during login:', error);
-      clearFields();
-      setError(`Network error: ${error.message}`);
+      if (error.response && error.status === 404) {
+        setError(error.response.data || "User not found!");
+      } else if (error.response && error.response.status === 401) {
+        setError("Incorrect email or password.");
+      } else {
+        setError(`Network error: ${error.message}`);
+      }
     }
   };
 
   const handleModalClose = () => {
     setShowModal(false);
     if (userIdAfterLogin !== null) {
-      navigate(`/users/${userIdAfterLogin}/subscriptions`);
+      navigate(`/subnotify/your-subscriptions`);
     }
   };
 
@@ -141,7 +124,7 @@ const LogIn = ({ onLogin }) => {
               </Form>
 
               <div className="text-center mt-3">
-                <a href="/signup">Don't have an account? Sign up</a>
+                <a href="/subnotify/signup">Don't have an account? Sign up</a>
               </div>
 
               {error && <Alert variant="danger" className="mt-3">{error}</Alert>}

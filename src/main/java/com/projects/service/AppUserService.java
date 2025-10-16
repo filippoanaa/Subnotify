@@ -3,12 +3,14 @@ package com.projects.service;
 
 import com.projects.config.JWTUtil;
 import com.projects.exception.EntityAlreadyExistsException;
+import com.projects.exception.EntityNotFoundException;
 import com.projects.exception.ValidationException;
 import com.projects.model.dto.RegisterRequest;
 import com.projects.model.entity.AppUser;
+import com.projects.model.entity.Subscription;
 import com.projects.model.mapper.UserMapper;
 import com.projects.repository.AppUserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.projects.repository.SubscriptionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -16,21 +18,24 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class AppUserService {
 
     private AppUserRepository userRepository;
+    private SubscriptionRepository subscriptionRepository;
 
     private PasswordEncoder passwordEncoder;
 
     private UserMapper userMapper;
 
     @Autowired
-    public AppUserService(AppUserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public AppUserService(AppUserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, SubscriptionRepository subscriptionRepository) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
+        this.subscriptionRepository = subscriptionRepository;
 
     }
 
@@ -47,12 +52,12 @@ public class AppUserService {
     }
 
 
-    public AppUser getAppUserById(Long id) {
+    public AppUser getAppUserById(UUID id) {
         return userRepository.findById(id).get();
     }
 
 
-    public void updateAppUser(long  userId, String oldPassword, String newPassword) {
+    public void updateAppUser(UUID  userId, String oldPassword, String newPassword) {
         AppUser user = userRepository.findById(userId).get();
         if(user == null)
             throw new EntityNotFoundException("AppUser not found");
@@ -63,7 +68,7 @@ public class AppUserService {
         userRepository.save(user);
     }
 
-    public void deleteAppUserById(Long id) {
+    public void deleteAppUserById(UUID id) {
         userRepository.deleteById(id);
     }
 
@@ -72,13 +77,14 @@ public class AppUserService {
     }
 
     public AppUser findByEmail(String email) {
-        AppUser user = userRepository.findByEmail(email);
+        AppUser user = userRepository.findAppUsersByEmail(email);
         if(user == null){
             throw new EntityNotFoundException("AppUser with email: " + email + " not found");
         }
 
         return user;
     }
+
 
 
 }

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -20,8 +21,8 @@ import java.time.LocalDate;
 public class Subscription {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -39,10 +40,6 @@ public class Subscription {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
-    @JsonBackReference
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private AppUser appUser;
 
     public void calculateDueDate() {
         if (this.startDate != null && this.type != null) {
@@ -70,6 +67,11 @@ public class Subscription {
             }
             this.dueDate = nextDueDate;
         }
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.calculateDueDate();
     }
 
     @Override
