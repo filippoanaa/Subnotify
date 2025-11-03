@@ -86,9 +86,9 @@ const UpdateAppUser = () => {
             <Row className="justify-content-center">
                 <Col md={6}>
                     <Card>
-                        <Card.Header className="bg-primary text-white">
-                            <h4 className="text-center">Account Settings</h4>
-                        </Card.Header>
+                        <Card.Title as="h3" className="text-center fw-bold mb-2">
+                            Account settings
+                        </Card.Title>
                         <Card.Body>
                             <h5 className="card-title">Update Password</h5>
                             <Form onSubmit={handleUpdate}>

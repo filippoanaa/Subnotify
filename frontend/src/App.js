@@ -2,7 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import SubscriptionsList from './components/SubscriptionsList';
 import LogIn from './components/LogIn';
-import AddAppUser from './components/AddAppUser';
+import Signup from './components/Signup';
 import AddSubscription from './components/AddSubscription';
 import UpdateAppUser from './components/UpdateAppUser';
 import NavBar from './components/NavBar';
@@ -47,7 +47,7 @@ function App() {
                 path="/subnotify/login"
                 element={<LogIn onLogin={handleLogin} />}
             />
-            <Route path="/subnotify/signup" element={<AddAppUser onLogin={handleLogin} />} />
+            <Route path="/subnotify/signup" element={<Signup onLogin={handleLogin} />} />
             <Route path="/subnotify/your-subscriptions" element={<SubscriptionsList />} />
             <Route path="/subnotify/add-subscription" element={<AddSubscription />} />
             <Route
