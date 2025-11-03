@@ -40,6 +40,11 @@ public class Subscription {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @JsonBackReference
+    private AppUser user;
+
 
     public void calculateDueDate() {
         if (this.startDate != null && this.type != null) {

@@ -4,7 +4,7 @@ import { Alert, Container, Row, Col, Card, Form, Button } from 'react-bootstrap'
 import { jwtDecode } from "jwt-decode";
 import Services from "../services/Services";
 
-const AddAppUser = ({ onLogin }) => {
+const Signup = ({ onLogin }) => {
     const [form, setForm] = useState({
         firstName: '',
         lastName: '',
@@ -63,7 +63,7 @@ const AddAppUser = ({ onLogin }) => {
                     }));
 
                     onLogin(decodedJwt.sub);
-                    navigate(`/subnotify}/your-subscriptions`);
+                    navigate(`/subnotify/your-subscriptions`);
                 } else {
                     setError("Login failed after registration.");
                 }
@@ -88,9 +88,9 @@ const AddAppUser = ({ onLogin }) => {
             <Row className="justify-content-center">
                 <Col md={6}>
                     <Card>
-                        <Card.Header className="bg-primary text-white text-center">
-                            <h4>Create account</h4>
-                        </Card.Header>
+                        <Card.Title as="h3" className="text-center fw-bold mb-2">
+                            Join us
+                        </Card.Title>
                         <Card.Body>
                             <Form onSubmit={handleAddAppUser}>
                                 <Form.Group className="mb-3">
@@ -159,4 +159,4 @@ const AddAppUser = ({ onLogin }) => {
     );
 };
 
-export default AddAppUser;
+export default Signup;

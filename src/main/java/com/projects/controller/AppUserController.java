@@ -61,7 +61,6 @@ public class AppUserController {
         }
     }
 
-    // ================== SUBSCRIPTIONS CRUD ==================
 
     @GetMapping("/{userId}/subscriptions")
     public ResponseEntity<List<Subscription>> getAppUsersSubscriptions(@PathVariable UUID userId) {
