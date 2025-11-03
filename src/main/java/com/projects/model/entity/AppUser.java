@@ -37,8 +37,8 @@ public class AppUser {
     private String password;
 
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "user_id")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)    @JoinColumn(name = "user_id")
+    @JsonManagedReference
     private List<Subscription> subscriptions = new ArrayList<>();
 
 
